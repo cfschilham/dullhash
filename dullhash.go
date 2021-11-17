@@ -78,7 +78,7 @@ func Sum(data []byte) [32]byte {
 	for _, chunk := range chunks {
 		a, b, c, d, e, f, g, h := h0, h1, h2, h3, h4, h5, h6, h7
 
-		for i := 0; i < 128; i++ {
+		for i := 0; i < 8; i++ {
 			for i := 0; i < len(chunk); i++ {
 				a = rightRotate(d ^ e ^ g, 9)
 				b = rightRotate((a & c) | (chunk[i] & a), 12) ^ h
@@ -86,10 +86,10 @@ func Sum(data []byte) [32]byte {
 				if i > 1 {
 					c = b << 27 | (f ^ chunk[i-2])
 				}
-				d = leftRotate(c, 5) ^ chunk[g%15]
+				d = leftRotate(c, 5) ^ chunk[g%16]
 				e = (a ^ d ^ b) | h >> 10 | f << 20
-				f = c ^ leftRotate(e, chunk[i]) | (chunk[chunk[i]%15] ^ chunk[b%15] ^ d)
-				g = (a & e) ^ h5
+				f = c ^ leftRotate(e, chunk[i]) | (chunk[chunk[i]%16] ^ chunk[b%16] ^ d)
+				g = (a & e) ^ b
 				h = (d ^ a ^ f) & chunk[i] | b
 			}
 		}
