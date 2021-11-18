@@ -102,7 +102,7 @@ func Sum(data []byte) [32]byte {
 				y := f ^ h ^ (x & e)
 				z := (b << 10) | (y >> 22) ^ c
 
-				a, b, c, d, e, f, g, h = addOverflow(b, x), c, f, addOverflow(e, z), addOverflow(d, y), a, h, g
+				a, b, c, d, e, f, g, h = addOverflow(b, x), h, f, addOverflow(e, z), addOverflow(d, y), a, c, g
 			}
 		}
 
