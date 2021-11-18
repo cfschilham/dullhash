@@ -23,19 +23,28 @@ var MaxSum = [32]byte{
 
 func chunkify(data []byte) [][16]uint32 {
 	data = append(data, 128)
+
+	// Data length in bits to store in the final 64 bits of the last chunk.
 	dataLen := len(data) * 8
 
+	// If less than 64 bits remain in what would have been the final chunk, not
+	// enough space is left to append the data length at the end. Instead 0s are
+	// appended until the chunk is full and the length will be stored in the
+	// next chunk.
 	if len(data)%64 > 56 {
 		for i := 0; i < len(data)%64; i++ {
 			data = append(data, 0)
 		}
 	}
+
+	// Make sure the final chunk can be divided into 4-byte pieces.
 	for i := 0; i < (len(data)%64)%4; i++ {
 		data = append(data, 0)
 	}
 
 	chunks := make([][16]uint32, (len(data)/64)+1)
 
+	// Make all chunks of uint32s besides the final chunk.
 	for i := 0; i < len(chunks)-1; i++ {
 		for j := 0; j < 16; j++ {
 			chunks[i][j] = uint32(data[(j*4)+(i*64)])<<24 |
@@ -45,13 +54,16 @@ func chunkify(data []byte) [][16]uint32 {
 		}
 	}
 
+	// Make the final chunk.
 	for i := 0; i < (len(data)%64)/4; i++ {
-		chunks[len(chunks)-1][i] = uint32(data[((len(chunks)/64)*64)+(i*4)])<<24 |
-			uint32(data[((len(chunks)/64)*64)+(i*4)+1])<<16 |
-			uint32(data[((len(chunks)/64)*64)+(i*4)+2])<<8 |
-			uint32(data[((len(chunks)/64)*64)+(i*4)+3])
+		chunks[len(chunks)-1][i] = uint32(data[((len(chunks)-1)*64)+(i*4)])<<24 |
+			uint32(data[((len(chunks)-1)*64)+(i*4)+1])<<16 |
+			uint32(data[((len(chunks)-1)*64)+(i*4)+2])<<8 |
+			uint32(data[((len(chunks)-1)*64)+(i*4)+3])
 	}
 
+	// Set the final two uint32s of the final chunk equal to the length of the
+	// initial data.
 	chunks[len(chunks)-1][14] = uint32(dataLen >> 32)
 	chunks[len(chunks)-1][15] = uint32(dataLen - (dataLen >> 32))
 
@@ -86,17 +98,11 @@ func Sum(data []byte) [32]byte {
 
 		for i := 0; i < 8; i++ {
 			for i := 0; i < len(chunk); i++ {
-				a = rightRotate(d ^ e ^ g, 9)
-				b = rightRotate((a & c) | (chunk[i] & a), 12) ^ h
-				c = b << 27 | (f ^ chunk[i])
-				if i > 1 {
-					c = b << 27 | (f ^ chunk[i-2])
-				}
-				d = leftRotate(c, 5) ^ chunk[g%16]
-				e = (a ^ d ^ b) | h >> 10 | f << 20
-				f = c ^ leftRotate(e, chunk[i]) | (chunk[chunk[i]%16] ^ chunk[b%16] ^ d)
-				g = (a & e) ^ b
-				h = (d ^ a ^ f) & chunk[i] | b
+				x := a ^ d ^ rightRotate(chunk[i], 11)
+				y := f ^ h ^ (x & e)
+				z := (b << 10) | (y >> 22) ^ c
+
+				a, b, c, d, e, f, g, h = addOverflow(b, x), c, f, addOverflow(e, z), addOverflow(d, y), a, h, g
 			}
 		}
 
