@@ -17,6 +17,7 @@ var (
 )
 
 func init() {
+	inputs, outputs = make([]float64, correlationBatchSize), make([]float64, correlationBatchSize)
 	for i := 0; i < len(inputs); i++ {
 		inputs[i] = float64(rand.Int63())
 	}
