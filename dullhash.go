@@ -1,6 +1,7 @@
 package dullhash
 
 import (
+	"encoding/binary"
 	"math"
 )
 
@@ -19,10 +20,6 @@ var MaxSum = [32]byte{
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255,
-}
-
-func bigEndianUint32(x uint32) []byte {
-	return []byte{byte(x>>24), byte((x>>16)&0xFF00), byte((x>>8)&0xFF0000), byte(x&0xFF000000)}
 }
 
 func chunkify(data []byte) [][16]uint32 {
@@ -116,7 +113,8 @@ func Sum(data []byte) [32]byte {
 
 	sum := [32]byte{}
 	for i, n := range []uint32{h0, h1, h2, h3, h4, h5, h6, h7} {
-		nbe := bigEndianUint32(n)
+		nbe := make([]byte, 4)
+		binary.BigEndian.PutUint32(nbe, n)
 		sum[i*4], sum[(i*4)+1], sum[(i*4)+2], sum[(i*4)+3] = nbe[0], nbe[1], nbe[2], nbe[3]
 	}
 	return sum
