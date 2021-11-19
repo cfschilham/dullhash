@@ -47,7 +47,16 @@ func TestSumAdjacentCollisions(t *testing.T) {
 func TestSumPerformance(t *testing.T) {
 	start := time.Now()
 	// generate sample in first test which will be used in the next 2 tests
-	generateSample(correlationBatchSize)
+	rand.Seed(time.Now().UnixNano())
+	inputs, outputs = make([]float64, correlationBatchSize), make([]float64, correlationBatchSize)
+	for i := 0; i < len(inputs); i++ {
+		inputs[i] = float64(rand.Int63())
+	}
+	for i := 0; i < correlationBatchSize; i++ {
+		sum := Sum(big.NewInt(int64(i)).Bytes())
+		sumbi := big.NewInt(0).SetBytes(sum[:])
+		outputs[i] = float64(sumbi.Div(sumbi, big.NewInt(4)).Int64())
+	}
 	t.Logf("hash time: %v, batch size: %d", time.Since(start), correlationBatchSize)
 }
 
@@ -67,17 +76,4 @@ func TestSumSpearmanRhoCorrelationCoefficient(t *testing.T) {
 		t.Errorf("spearmanr correlation coefficient of %v is too high/low, expected [-0.001, 0.001]\n", spearmanr)
 	}
 	t.Logf("spearmanr correlation: %v, associated p-value: %v, batch size: %v\n", spearmanr, p, correlationBatchSize)
-}
-
-func generateSample(batchSize int) {
-	rand.Seed(time.Now().UnixNano())
-	inputs, outputs = make([]float64, batchSize), make([]float64, batchSize)
-	for i := 0; i < len(inputs); i++ {
-		inputs[i] = float64(rand.Int63())
-	}
-	for i := 0; i < batchSize; i++ {
-		sum := Sum(big.NewInt(int64(i)).Bytes())
-		sumbi := big.NewInt(0).SetBytes(sum[:])
-		outputs[i] = float64(sumbi.Div(sumbi, big.NewInt(4)).Int64())
-	}
 }
