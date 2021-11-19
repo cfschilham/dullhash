@@ -11,8 +11,21 @@ import (
 )
 
 const correlationBatchSize = 5000000
-var inputs []float64 = nil
-var outputs []float64 = nil
+var (
+	inputs  []float64
+	outputs []float64
+)
+
+func init() {
+	for i := 0; i < len(inputs); i++ {
+		inputs[i] = float64(rand.Int63())
+	}
+	for i := 0; i < correlationBatchSize; i++ {
+		sum := Sum(big.NewInt(int64(i)).Bytes())
+		sumbi := big.NewInt(0).SetBytes(sum[:])
+		outputs[i] = float64(sumbi.Div(sumbi, big.NewInt(4)).Int64())
+	}
+}
 
 func TestSumAdjacentCollisions(t *testing.T) {
 	colls := 0
@@ -44,20 +57,13 @@ func TestSumAdjacentCollisions(t *testing.T) {
 	}
 }
 
-func TestSumPerformance(t *testing.T) {
-	start := time.Now()
-	// generate sample in first test which will be used in the next 2 tests
-	rand.Seed(time.Now().UnixNano())
-	inputs, outputs = make([]float64, correlationBatchSize), make([]float64, correlationBatchSize)
-	for i := 0; i < len(inputs); i++ {
-		inputs[i] = float64(rand.Int63())
+func BenchmarkSum(b *testing.B) {
+	startTime := time.Now()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		 _ = Sum([]byte{0})
 	}
-	for i := 0; i < correlationBatchSize; i++ {
-		sum := Sum(big.NewInt(int64(i)).Bytes())
-		sumbi := big.NewInt(0).SetBytes(sum[:])
-		outputs[i] = float64(sumbi.Div(sumbi, big.NewInt(4)).Int64())
-	}
-	t.Logf("hash time: %v, batch size: %d", time.Since(start), correlationBatchSize)
+	b.Logf("hash rate: %.3f MH/s", (float64(b.N) / time.Since(startTime).Seconds()) / 1000000)
 }
 
 func TestSumCorrelationCoefficient(t *testing.T) {
