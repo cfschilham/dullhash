@@ -21,6 +21,10 @@ var MaxSum = [32]byte{
 	255, 255,
 }
 
+func bigEndianUint32(x uint32) []byte {
+	return []byte{byte(x>>24), byte((x>>16)&0xFF00), byte((x>>8)&0xFF0000), byte(x&0xFF000000)}
+}
+
 func chunkify(data []byte) [][16]uint32 {
 	data = append(data, 128)
 
@@ -110,14 +114,10 @@ func Sum(data []byte) [32]byte {
 		h4, h5, h6, h7 = addOverflow(h4, e), addOverflow(h5, f), addOverflow(h6, g), addOverflow(h7, h)
 	}
 
-	return [32]byte{
-		byte(h0>>24), byte(h0>>16-h0>>24), byte(h0>>8-h0>>16-h0>>24), byte(h0-h0>>8-h0>>16-h0>>24),
-		byte(h1>>24), byte(h1>>16-h1>>24), byte(h1>>8-h1>>16-h1>>24), byte(h1-h1>>8-h1>>16-h1>>24),
-		byte(h2>>24), byte(h2>>16-h2>>24), byte(h2>>8-h2>>16-h2>>24), byte(h2-h2>>8-h2>>16-h2>>24),
-		byte(h3>>24), byte(h3>>16-h3>>24), byte(h3>>8-h3>>16-h3>>24), byte(h3-h3>>8-h3>>16-h3>>24),
-		byte(h4>>24), byte(h4>>16-h4>>24), byte(h4>>8-h4>>16-h4>>24), byte(h4-h4>>8-h4>>16-h4>>24),
-		byte(h5>>24), byte(h5>>16-h5>>24), byte(h5>>8-h5>>16-h5>>24), byte(h5-h5>>8-h5>>16-h5>>24),
-		byte(h6>>24), byte(h6>>16-h6>>24), byte(h6>>8-h6>>16-h6>>24), byte(h6-h6>>8-h6>>16-h6>>24),
-		byte(h7>>24), byte(h7>>16-h7>>24), byte(h7>>8-h7>>16-h7>>24), byte(h7-h7>>8-h7>>16-h7>>24),
+	sum := [32]byte{}
+	for i, n := range []uint32{h0, h1, h2, h3, h4, h5, h6, h7} {
+		nbe := bigEndianUint32(n)
+		sum[i*4], sum[(i*4)+1], sum[(i*4)+2], sum[(i*4)+3] = nbe[0], nbe[1], nbe[2], nbe[3]
 	}
+	return sum
 }
