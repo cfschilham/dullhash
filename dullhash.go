@@ -26,7 +26,7 @@ func chunkify(data []byte) [][16]uint32 {
 	data = append(data, 128)
 
 	// Data length in bits to store in the final 64 bits of the last chunk.
-	dataLen := len(data) * 8
+	dataLen := uint64(len(data) * 8)
 
 	// If less than 64 bits remain in what would have been the final chunk, not
 	// enough space is left to append the data length at the end. Instead 0s are
@@ -48,25 +48,19 @@ func chunkify(data []byte) [][16]uint32 {
 	// Make all chunks of uint32s besides the final chunk.
 	for i := 0; i < len(chunks)-1; i++ {
 		for j := 0; j < 16; j++ {
-			chunks[i][j] = uint32(data[(j*4)+(i*64)])<<24 |
-				uint32(data[(j*4)+(i*64)+1])<<16 |
-				uint32(data[(j*4)+(i*64)+2])<<8 |
-				uint32(data[(j*4)+(i*64)+3])
+			chunks[i][j] = binary.BigEndian.Uint32(data[(i*64)+(j*4):(i*64)+(j*4)+4])
 		}
 	}
 
 	// Make the final chunk.
 	for i := 0; i < (len(data)%64)/4; i++ {
-		chunks[len(chunks)-1][i] = uint32(data[((len(chunks)-1)*64)+(i*4)])<<24 |
-			uint32(data[((len(chunks)-1)*64)+(i*4)+1])<<16 |
-			uint32(data[((len(chunks)-1)*64)+(i*4)+2])<<8 |
-			uint32(data[((len(chunks)-1)*64)+(i*4)+3])
+		chunks[len(chunks)-1][i] = binary.BigEndian.Uint32(data[((len(chunks)-1)*64)+(i*4):((len(chunks)-1)*64)+(i*4)+4])
 	}
 
 	// Set the final two uint32s of the final chunk equal to the length of the
 	// initial data.
 	chunks[len(chunks)-1][14] = uint32(dataLen >> 32)
-	chunks[len(chunks)-1][15] = uint32(dataLen - (dataLen >> 32))
+	chunks[len(chunks)-1][15] = uint32(dataLen&0x0000FFFF)
 
 	return chunks
 }
