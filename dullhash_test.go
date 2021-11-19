@@ -17,6 +17,7 @@ var (
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	inputs, outputs = make([]float64, correlationBatchSize), make([]float64, correlationBatchSize)
 	for i := 0; i < len(inputs); i++ {
 		inputs[i] = float64(rand.Int63())
@@ -30,7 +31,6 @@ func init() {
 
 func TestSumAdjacentCollisions(t *testing.T) {
 	colls := 0
-	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < 16; i++ {
 		data1, data2 := make([]byte, 256 + i), make([]byte, 256 + i)
 		if _, err := rand.Read(data1); err != nil {
