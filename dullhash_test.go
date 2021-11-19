@@ -2,12 +2,17 @@ package dullhash
 
 import (
 	"encoding/hex"
+	"github.com/dgryski/go-onlinestats"
 	"gonum.org/v1/gonum/stat"
 	"math/big"
 	"math/rand"
 	"testing"
 	"time"
 )
+
+const correlationBatchSize = 5000000
+var inputs []float64 = nil
+var outputs []float64 = nil
 
 func TestSumAdjacentCollisions(t *testing.T) {
 	colls := 0
@@ -39,10 +44,34 @@ func TestSumAdjacentCollisions(t *testing.T) {
 	}
 }
 
+func TestSumPerformance(t *testing.T) {
+	start := time.Now()
+	// generate sample in first test which will be used in the next 2 tests
+	generateSample(correlationBatchSize)
+	t.Logf("hash time: %v, batch size: %d", time.Since(start), correlationBatchSize)
+}
+
 func TestSumCorrelationCoefficient(t *testing.T) {
-	batchSize := 5000000
+	pearsons := stat.Correlation(inputs, outputs, nil)
+
+	if pearsons > .001 || pearsons < -.001 {
+		t.Errorf("pearsons correlation coefficient of %v is too high/low, expected [-0.001, 0.001]\n", pearsons)
+	}
+	t.Logf("pearsons correlation: %v, batch size: %v\n", pearsons, correlationBatchSize)
+}
+
+func TestSumSpearmanRhoCorrelationCoefficient(t *testing.T) {
+	spearmanr, p := onlinestats.Spearman(inputs, outputs)
+
+	if spearmanr > .001 || spearmanr < -.001 {
+		t.Errorf("spearmanr correlation coefficient of %v is too high/low, expected [-0.001, 0.001]\n", spearmanr)
+	}
+	t.Logf("spearmanr correlation: %v, associated p-value: %v, batch size: %v\n", spearmanr, p, correlationBatchSize)
+}
+
+func generateSample(batchSize int) {
 	rand.Seed(time.Now().UnixNano())
-	inputs, outputs := make([]float64, batchSize), make([]float64, batchSize)
+	inputs, outputs = make([]float64, batchSize), make([]float64, batchSize)
 	for i := 0; i < len(inputs); i++ {
 		inputs[i] = float64(rand.Int63())
 	}
@@ -51,9 +80,4 @@ func TestSumCorrelationCoefficient(t *testing.T) {
 		sumbi := big.NewInt(0).SetBytes(sum[:])
 		outputs[i] = float64(sumbi.Div(sumbi, big.NewInt(4)).Int64())
 	}
-	coeff := stat.Correlation(inputs, outputs, nil)
-	if coeff > .1 || coeff < -.1 {
-		t.Errorf("correlation coefficient of %v is too high/low, expected [-0.1, 0.1]\n", coeff)
-	}
-	t.Logf("correlation: %v, batch size: %v\n", coeff, batchSize)
 }
