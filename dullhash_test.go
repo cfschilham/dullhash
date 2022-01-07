@@ -10,7 +10,8 @@ import (
 	"time"
 )
 
-const correlationBatchSize = 1000000
+const batchSize = 1000000
+
 var (
 	inputs  []float64
 	outputs []float64
@@ -18,11 +19,11 @@ var (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	inputs, outputs = make([]float64, correlationBatchSize), make([]float64, correlationBatchSize)
+	inputs, outputs = make([]float64, batchSize), make([]float64, batchSize)
 	for i := 0; i < len(inputs); i++ {
 		inputs[i] = float64(rand.Int63())
 	}
-	for i := 0; i < correlationBatchSize; i++ {
+	for i := 0; i < batchSize; i++ {
 		sum := Sum(big.NewInt(int64(i)).Bytes())
 		sumbi := big.NewInt(0).SetBytes(sum[:])
 		outputs[i] = float64(sumbi.Div(sumbi, big.NewInt(4)).Int64())
@@ -32,7 +33,7 @@ func init() {
 func TestSumAdjacentCollisions(t *testing.T) {
 	colls := 0
 	for i := 0; i < 16; i++ {
-		data1, data2 := make([]byte, 256 + i), make([]byte, 256 + i)
+		data1, data2 := make([]byte, 256+i), make([]byte, 256+i)
 		if _, err := rand.Read(data1); err != nil {
 			t.Fatalf("error while reading random bytes: %v\n", err)
 		}
@@ -59,30 +60,33 @@ func TestSumAdjacentCollisions(t *testing.T) {
 }
 
 func BenchmarkSum(b *testing.B) {
-	startTime := time.Now()
-	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		 _ = Sum([]byte{0})
+		_ = Sum([]byte{0})
 	}
-	b.Logf("hash rate: %.3f MH/s", (float64(b.N) / time.Since(startTime).Seconds()) / 1000000)
 }
 
-func TestSumCorrelationCoefficient(t *testing.T) {
-	pearsons := stat.Correlation(inputs, outputs, nil)
-
-	if pearsons > .001 || pearsons < -.001 {
-		t.Errorf("pearsons correlation coefficient of %v is too high/low, expected [-0.001, 0.001]\n", pearsons)
+func BenchmarkUsefulSum(b *testing.B) {
+	if b.N < 10 {
+		b.N = 10
 	}
-	t.Logf("pearsons correlation: %v, batch size: %v\n", pearsons, correlationBatchSize)
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = UsefulSum([]byte{0})
+	}
+}
+
+func TestSumPearsonsCorrelationCoefficient(t *testing.T) {
+	p := stat.Correlation(inputs, outputs, nil)
+	if p > .01 || p < -.01 {
+		t.Errorf("pearsons correlation coefficient of %v is too high/low, expected [-0.01, 0.01]\n", p)
+	}
 }
 
 func TestSumSpearmanRhoCorrelationCoefficient(t *testing.T) {
-	spearmanr, p := onlinestats.Spearman(inputs, outputs)
-
-	if spearmanr > .001 || spearmanr < -.001 {
-		t.Errorf("spearmanr correlation coefficient of %v is too high/low, expected [-0.001, 0.001]\n", spearmanr)
+	s, _ := onlinestats.Spearman(inputs, outputs)
+	if s > .01 || s < -.01 {
+		t.Errorf("spearman correlation coefficient of %v is too high/low, expected [-0.01, 0.01]\n", s)
 	}
-	t.Logf("spearmanr correlation: %v, associated p-value: %v, batch size: %v\n", spearmanr, p, correlationBatchSize)
 }
 
 func TestChunkify(t *testing.T) {
@@ -115,6 +119,15 @@ func TestChunkify(t *testing.T) {
 			if n != expected[i][j] {
 				t.Errorf("unexpected value at chunks[%v][%v]: got %08X expected %08X", i, j, n, expected[i][j])
 			}
+		}
+	}
+}
+
+func TestUsefulSum(t *testing.T) {
+	for _, input := range inputs[:10] {
+		usum, factors := UsefulSum(big.NewInt(int64(input)).Bytes())
+		if factors == nil && usum != Sum(big.NewInt(int64(input)).Bytes()) {
+			t.Errorf("unexpected useful sum for %x: expected same as regular sum because no factors were found, got %x", input, usum)
 		}
 	}
 }

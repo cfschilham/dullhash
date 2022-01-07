@@ -2,7 +2,9 @@ package dullhash
 
 import (
 	"encoding/binary"
+	"github.com/cfschilham/dullhash/sieve"
 	"math"
+	"math/big"
 )
 
 const (
@@ -48,19 +50,19 @@ func chunkify(data []byte) [][16]uint32 {
 	// Make all chunks of uint32s besides the final chunk.
 	for i := 0; i < len(chunks)-1; i++ {
 		for j := 0; j < 16; j++ {
-			chunks[i][j] = binary.BigEndian.Uint32(data[(i*64)+(j*4):(i*64)+(j*4)+4])
+			chunks[i][j] = binary.BigEndian.Uint32(data[(i*64)+(j*4) : (i*64)+(j*4)+4])
 		}
 	}
 
 	// Make the final chunk.
 	for i := 0; i < (len(data)%64)/4; i++ {
-		chunks[len(chunks)-1][i] = binary.BigEndian.Uint32(data[((len(chunks)-1)*64)+(i*4):((len(chunks)-1)*64)+(i*4)+4])
+		chunks[len(chunks)-1][i] = binary.BigEndian.Uint32(data[((len(chunks)-1)*64)+(i*4) : ((len(chunks)-1)*64)+(i*4)+4])
 	}
 
 	// Set the final two uint32s of the final chunk equal to the length of the
 	// initial data.
 	chunks[len(chunks)-1][14] = uint32(dataLen >> 32)
-	chunks[len(chunks)-1][15] = uint32(dataLen&0x0000FFFF)
+	chunks[len(chunks)-1][15] = uint32(dataLen & 0x0000FFFF)
 
 	return chunks
 }
@@ -77,12 +79,12 @@ func addOverflow(x, y uint32) uint32 {
 
 func leftRotate(x, n uint32) uint32 {
 	n %= 32
-	return x << n | x >> (32-n)
+	return x<<n | x>>(32-n)
 }
 
 func rightRotate(x, n uint32) uint32 {
 	n %= 32
-	return x >> n | x << (32-n)
+	return x>>n | x<<(32-n)
 }
 
 func Sum(data []byte) [32]byte {
@@ -112,4 +114,17 @@ func Sum(data []byte) [32]byte {
 		sum[i*4], sum[(i*4)+1], sum[(i*4)+2], sum[(i*4)+3] = nbe[0], nbe[1], nbe[2], nbe[3]
 	}
 	return sum
+}
+
+func UsefulSum(data []byte) ([32]byte, []*big.Int) {
+	sum := Sum(data)
+	// TODO: determine the size of the integer to be extracted from the hash.
+	n := big.NewInt(0).SetBytes(sum[:8]) // First 64 bits of the hash (for now).
+	f1, f2 := sieve.Factorize(n)
+	if f1 != nil && f2 != nil {
+		data = append(data, f1.Bytes()...)
+		data = append(data, f2.Bytes()...)
+		return Sum(data), []*big.Int{f1, f2}
+	}
+	return sum, nil
 }
