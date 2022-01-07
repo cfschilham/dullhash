@@ -5,6 +5,10 @@ github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794 h1:xlwdaKcTN
 github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794/go.mod h1:7e+I0LQFUI9AXWxOfsQROs9xPhoJtbsyWcjJqDd4KPY=
 github.com/ajstarks/svgo v0.0.0-20180226025133-644b8db467af/go.mod h1:K08gAheRH3/J6wwsYMMT4xOr94bZjxIelGM0+d/wbFw=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
+github.com/cfschilham/factorlib v0.0.0-20220107134833-ff245c943558 h1:PRr4VSyKUoz4gMxYX7U+7SJpgGlhytoXoOsa5pBOdu4=
+github.com/cfschilham/factorlib v0.0.0-20220107134833-ff245c943558/go.mod h1:SlyLhogEvn/lr4K0e7emo8oXWa2O5jqmvI0Kx8OZuFk=
+github.com/cfschilham/factorlib v0.0.0-20220107135822-78b9ce71a108 h1:580tZ6jb+KdzvK3I7wvv+CITbxP/qPiOVIUQZoM9vhQ=
+github.com/cfschilham/factorlib v0.0.0-20220107135822-78b9ce71a108/go.mod h1:SlyLhogEvn/lr4K0e7emo8oXWa2O5jqmvI0Kx8OZuFk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgryski/go-onlinestats v0.0.0-20170612111826-1c7d19468768 h1:Xzl7CSuSnGsyU+9xmSU2h8w3d7Tnis66xeoNN207tLo=
 github.com/dgryski/go-onlinestats v0.0.0-20170612111826-1c7d19468768/go.mod h1:alfmlCqcg4uw9jaoIU1nOp9RFdJLMuu8P07BCEgpgoo=
@@ -24,6 +28,8 @@ github.com/phpdave11/gofpdi v1.0.12/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/randall77/factorlib v0.0.0-20190615205557-a59e713fbb9b h1:apGdRIXrEUS8WfIL1YR/Fum6X4EekM+LNrw+e/BnPMA=
+github.com/randall77/factorlib v0.0.0-20190615205557-a59e713fbb9b/go.mod h1:CJdUPTK5F1lNtvkb4nIUdZYNXpYwjiIRUZ6jKitiE7M=
 github.com/ruudk/golang-pdf417 v0.0.0-20181029194003-1af4ab5afa58/go.mod h1:6lfFZQK844Gfx8o5WFuvpxWRwnSoipWe/p622j1v06w=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=

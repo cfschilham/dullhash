@@ -2,9 +2,14 @@ package dullhash
 
 import (
 	"encoding/binary"
-	"github.com/cfschilham/dullhash/sieve"
+	"github.com/cfschilham/factorlib"
+	flbig "github.com/cfschilham/factorlib/big"
+	"io"
+	"log"
 	"math"
 	"math/big"
+	"math/rand"
+	"time"
 )
 
 const (
@@ -23,6 +28,8 @@ var MaxSum = [32]byte{
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255,
 }
+
+var rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func chunkify(data []byte) [][16]uint32 {
 	data = append(data, 128)
@@ -116,15 +123,30 @@ func Sum(data []byte) [32]byte {
 	return sum
 }
 
-func UsefulSum(data []byte) ([32]byte, []*big.Int) {
-	sum := Sum(data)
+func UsefulSum(data []byte) ([32]byte, *big.Int, []*big.Int) {
 	// TODO: determine the size of the integer to be extracted from the hash.
-	n := big.NewInt(0).SetBytes(sum[:8]) // First 64 bits of the hash (for now).
-	f1, f2 := sieve.Factorize(n)
-	if f1 != nil && f2 != nil {
-		data = append(data, f1.Bytes()...)
-		data = append(data, f2.Bytes()...)
-		return Sum(data), []*big.Int{f1, f2}
+	const numBytes = 4 // First 32 bits of the hash (for now).
+
+	sum := Sum(data)
+	n := big.NewInt(0).SetBytes(sum[:numBytes])
+	nfl, ok := flbig.ParseInt(n.String())
+	if !ok {
+		panic("conversion of math/big to factorlib/big not ok")
 	}
-	return sum, nil
+	factorsfl, err := factorlib.Factor(nfl, "qs", rnd, log.New(io.Discard, "", 0))
+	if err != nil {
+		panic("error while factorizing")
+	}
+	factors := make([]*big.Int, len(factorsfl))
+	for i, factorfl := range factorsfl {
+		factors[i] = factorfl.Underlying()
+	}
+	if len(factors) != 0 {
+		for _, factor := range factors {
+			factorBytes := make([]byte, numBytes)
+			factor.FillBytes(factorBytes)
+			data = append(data, factorBytes...)
+		}
+	}
+	return Sum(data), n, factors
 }

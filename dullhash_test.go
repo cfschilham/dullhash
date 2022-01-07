@@ -71,7 +71,7 @@ func BenchmarkUsefulSum(b *testing.B) {
 	}
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = UsefulSum([]byte{0})
+		_, _, _ = UsefulSum([]byte{0})
 	}
 }
 
@@ -125,7 +125,7 @@ func TestChunkify(t *testing.T) {
 
 func TestUsefulSum(t *testing.T) {
 	for _, input := range inputs[:10] {
-		usum, factors := UsefulSum(big.NewInt(int64(input)).Bytes())
+		usum, _, factors := UsefulSum(big.NewInt(int64(input)).Bytes())
 		if factors == nil && usum != Sum(big.NewInt(int64(input)).Bytes()) {
 			t.Errorf("unexpected useful sum for %x: expected same as regular sum because no factors were found, got %x", input, usum)
 		}
